@@ -13,8 +13,6 @@ using System.Windows.Forms;
 using System.Xml;
 using System.Xml.Linq;
 
-//Test Change2
-
 namespace GameProfileSaver
 {
     public partial class Form1 : Form
@@ -327,9 +325,10 @@ namespace GameProfileSaver
             String appDataFolder = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData).ToString();
             String gpsPath = appDataFolder + "/GameProfileSaver";
             String gName = comboBox1.SelectedItem.ToString();
+            String userDir = gpsPath + "/profiles/" + currentUserLabel.Text;
 
             XmlDocument doc = new XmlDocument();
-            doc.Load(gpsPath + "/games.xml");
+            doc.Load(userDir + "/games.xml");
             var xDoc = XDocument.Load(gpsPath + "/games.xml");
 
             foreach (string li in listBox1.SelectedItems)
@@ -340,7 +339,7 @@ namespace GameProfileSaver
                     .Remove();
             }
 
-            xDoc.Save(gpsPath + "/games.xml");
+            xDoc.Save(userDir + "/games.xml");
             refreshListBox();
         }
 
@@ -348,9 +347,10 @@ namespace GameProfileSaver
         {
             String appDataFolder = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData).ToString();
             String gpsPath = appDataFolder + "/GameProfileSaver";
+            String userDir = gpsPath + "/profiles/" + currentUserLabel.Text;
 
             XmlDocument doc = new XmlDocument();
-            doc.Load(gpsPath + "/games.xml");
+            doc.Load(userDir + "/games.xml");
             String gName = comboBox1.SelectedItem.ToString();
             XmlNode gameName = doc.SelectSingleNode("//games/game[gameName='" + gName + "']/exePath");
             String toStart = gameName.InnerText;
@@ -427,8 +427,47 @@ namespace GameProfileSaver
         {
             String appDataFolder = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData).ToString();
             String gpsPath = appDataFolder + "/GameProfileSaver";
+            String userDir = gpsPath + "/profiles/" + currentUserLabel.Text;
 
+            XmlDocument doc = new XmlDocument();
+            doc.Load(userDir + "\\games.xml");
+            String gName = comboBox1.SelectedItem.ToString();
+            foreach (XmlNode node in doc.SelectNodes("//games/game[gameName='" + gName + "']/Files/file"))
+            {
+                try
+                {
+                    if (!Directory.Exists(userDir + "/" + comboBox1.SelectedText))
+                    {
+                        Directory.CreateDirectory(userDir + "/" + comboBox1.SelectedText);
+                    }
 
+                    string filePath = node.InnerText;
+                    string fileName = filePath.Split('\\').Last();
+
+                    FileStream readerStream = new FileStream(node.InnerText, FileMode.Open, FileAccess.Read);
+                    FileStream writerStream = new FileStream(userDir + "/" + comboBox1.SelectedText + fileName, FileMode.OpenOrCreate, FileAccess.Write);
+                    int index = 0;
+                    byte[] buffByte = new byte[100];
+                    do
+                    {
+                        this.Text = index.ToString(); // here you indication
+                        Application.DoEvents();
+                        index += 100;
+                        readerStream.Read(buffByte, 0, buffByte.Length);
+                        writerStream.Write(buffByte, 0, buffByte.Length);
+
+                    }
+                    while (readerStream.Length > readerStream.Position);
+
+                    writerStream.Flush();
+                    writerStream.Close();
+                    readerStream.Close();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message);
+                }
+            }
         }
 
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
