@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml;
 using System.Xml.Linq;
+using Ionic.Zip;
 
 namespace GameProfileSaver
 {
@@ -276,50 +277,6 @@ namespace GameProfileSaver
             return files;
         }
 
-        static void FullDirList(DirectoryInfo dir, string searchPattern)
-        {
-            // Console.WriteLine("Directory {0}", dir.FullName);
-            // list the files
-            try
-            {
-                foreach (DirectoryInfo d in dir.GetDirectories())
-                {
-                    folders.Add(d);
-                }
-
-                foreach (DirectoryInfo ds in folders)
-                {
-                    folders.Add(ds);
-                }
-
-                MessageBox.Show("Folders: " + Environment.NewLine + folders.ToString());
-
-
-                
-                
-                //foreach (FileInfo f in dir.GetFiles(searchPattern, SearchOption.AllDirectories))
-                //{
-               //     //Console.WriteLine("File {0}", f.FullName);
-               //    files.Add(f);
-               // }
-            }
-            catch
-            {
-                MessageBox.Show("Directory {0}  \n could not be accessed!!!!", dir.FullName);
-                return;  // We alredy got an error trying to access dir so dont try to access it again
-            }
-
-            // process each directory
-            // If I have been able to see the files in the directory I should also be able 
-            // to look at its directories so I dont think I should place this in a try catch block
-            //foreach (DirectoryInfo d in dir.GetDirectories())
-            //{
-            //    folders.Add(d);
-            //    FullDirList(d, searchPattern);
-            //}
-
-        }
-
         private void removeFile_Click(object sender, EventArgs e)
         {
             String appDataFolder = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData).ToString();
@@ -371,7 +328,7 @@ namespace GameProfileSaver
                     toolStripStatusLabel1.Text = "Game closed";
                     gameRunningChecker.Stop();
                     toolStatusRefresh.Start();
-                    startWorkerFiles();
+                    backgroundWorker1.RunWorkerAsync();
                 }
             }
             catch (Exception ex)
@@ -379,7 +336,7 @@ namespace GameProfileSaver
                 toolStripStatusLabel1.Text = "Game closed";
                 gameRunningChecker.Stop();
                 toolStatusRefresh.Start();
-                startWorkerFiles();
+                backgroundWorker1.RunWorkerAsync();
             }
         }
 
@@ -415,11 +372,6 @@ namespace GameProfileSaver
 
         private void startSync_Click(object sender, EventArgs e)
         {
-            startWorkerFiles();
-        }
-
-        public void startWorkerFiles()
-        {
             backgroundWorker1.RunWorkerAsync();
         }
 
@@ -432,42 +384,24 @@ namespace GameProfileSaver
             XmlDocument doc = new XmlDocument();
             doc.Load(userDir + "\\games.xml");
             String gName = comboBox1.SelectedItem.ToString();
+            ZipFile pack = new ZipFile();
             foreach (XmlNode node in doc.SelectNodes("//games/game[gameName='" + gName + "']/Files/file"))
             {
                 try
                 {
-                    if (!Directory.Exists(userDir + "/" + comboBox1.SelectedText))
+                    if (!Directory.Exists(userDir + "\\" + gName))
                     {
-                        Directory.CreateDirectory(userDir + "/" + comboBox1.SelectedText);
+                        Directory.CreateDirectory(userDir + "\\" + gName);
                     }
 
-                    string filePath = node.InnerText;
-                    string fileName = filePath.Split('\\').Last();
-
-                    FileStream readerStream = new FileStream(node.InnerText, FileMode.Open, FileAccess.Read);
-                    FileStream writerStream = new FileStream(userDir + "/" + comboBox1.SelectedText + fileName, FileMode.OpenOrCreate, FileAccess.Write);
-                    int index = 0;
-                    byte[] buffByte = new byte[100];
-                    do
-                    {
-                        this.Text = index.ToString(); // here you indication
-                        Application.DoEvents();
-                        index += 100;
-                        readerStream.Read(buffByte, 0, buffByte.Length);
-                        writerStream.Write(buffByte, 0, buffByte.Length);
-
-                    }
-                    while (readerStream.Length > readerStream.Position);
-
-                    writerStream.Flush();
-                    writerStream.Close();
-                    readerStream.Close();
+                    pack.AddFile(node.InnerText);
                 }
                 catch (Exception ex)
                 {
                     MessageBox.Show(ex.Message);
                 }
             }
+            pack.Save(userDir + "\\" + gName);
         }
 
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
@@ -500,6 +434,26 @@ namespace GameProfileSaver
         private void logOut()
         {
             Application.Run(new loginForm());
+        }
+
+        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (backgroundWorker1.IsBusy)
+            {
+                DialogResult dr = MessageBox.Show("Close it?", "You sure?", MessageBoxButtons.YesNo);
+                if (dr == DialogResult.Yes)
+                {
+
+                }else if (dr == DialogResult.No)
+                {
+                    e.Cancel = false;
+                }
+            }
+        }
+
+        private void backgroundWorker1_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+            toolStripProgressBar1.Value = e.ProgressPercentage;
         }
     }
 }

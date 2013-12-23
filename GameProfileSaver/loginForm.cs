@@ -185,7 +185,7 @@ namespace GameProfileSaver
             {
                 this.Invoke((MethodInvoker)delegate()
                 {
-                    progressBar1.Value = 20;
+                    //progressBar1.Value = 20;
                 });
                 string myConnection = "datasource=e28787-mysql.services.easyname.eu;port=3306;username=u28407db3;password=1992stifei17;";
                 MySqlConnection myConn = new MySqlConnection(myConnection);
@@ -199,7 +199,7 @@ namespace GameProfileSaver
                 myReader = SelectCommand.ExecuteReader();
                 this.Invoke((MethodInvoker)delegate()
                 {
-                    progressBar1.Value = 65;
+                    //progressBar1.Value = 65;
                 });
                 int count = 0;
                 while (myReader.Read())
@@ -210,7 +210,7 @@ namespace GameProfileSaver
                 {
                     this.Invoke((MethodInvoker)delegate()
                     {
-                        progressBar1.Value = 100;
+                        //progressBar1.Value = 100;
                         Hide();
                     });
                     DialogResult = DialogResult.OK;
@@ -220,7 +220,7 @@ namespace GameProfileSaver
                     MessageBox.Show("Duplicate Username and password... Access denied");
                     this.Invoke((MethodInvoker)delegate()
                     {
-                        progressBar1.Value = 100;
+                        //progressBar1.Value = 100;
                         button1.Enabled = true;
                         checkBox1.Enabled = true;
                         checkBox2.Enabled = true;
@@ -231,7 +231,7 @@ namespace GameProfileSaver
                     MessageBox.Show("Username and/or password is not correct.. Please try again.");
                     this.Invoke((MethodInvoker)delegate()
                     {
-                        progressBar1.Value = 100;
+                        //progressBar1.Value = 100;
                         button1.Enabled = true;
                         checkBox1.Enabled = true;
                         checkBox2.Enabled = true;
@@ -243,7 +243,7 @@ namespace GameProfileSaver
                 MessageBox.Show("Error! Make sure you have an internet connection..." + Environment.NewLine + ex.Message);
                 this.Invoke((MethodInvoker)delegate()
                 {
-                    progressBar1.Value = 100;
+                    //progressBar1.Value = 100;
                     button1.Enabled = true;
                     checkBox1.Enabled = true;
                     checkBox2.Enabled = true;
@@ -289,6 +289,11 @@ namespace GameProfileSaver
         {
             String user = usernameText.Text;
             return user;
+        }
+
+        private void backgroundWorker1_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+            progressBar1.Value = e.ProgressPercentage;
         }
 
     }
